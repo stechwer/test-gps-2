@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPS Tracker</title>
+  <script src="https://www.openlayers.org/en/v4.6.5/build/ol.js"></script>
+</head>
+<body>
+  <div id="map" style="width: 100%; height: 400px;"></div>
+
+  <script>
+    // Функция для инициализации карты
+    function initMap() {
+      const map = new ol.Map({
+        target: 'map',
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM()
+          })
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([0, 0]),
+          zoom: 2
+        })
+      });
+
+      // Функция для обновления маркера с координатами
+      function updateMarker(coordinates) {
+        map.getView().setCenter(ol.proj.fromLonLat(coordinates));
+        marker.setGeometry(new ol.geom.Point(ol.proj.fromLonLat(coordinates)));
+      }
+
+      // Получение координат GPS
+      function getGPSLocation() {
+        navigator.geolocation.getCurrentPosition(
+          // Успешное получение координат
+          function(position) {
+            const coordinates = [position.coords.longitude, position.coords.latitude];
+            updateMarker(coordinates);
+          },
+          // Ошибка при получении координат
+          function(error) {
+            console.error('Error getting GPS coordinates:', error);
+          }
+        );
+      }
+
+      // Обновление координат каждые 2 секунды
+      setInterval(getGPSLocation, 2000);
+
+      // Создание маркера
+      const marker = new ol.Feature();
+      marker.setStyle(new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 6,
+          fill: new ol.style.Fill({color: 'red'}),
+          stroke: new ol.style.Stroke({color: 'white', width: 2})
+        })
+      }));
+
+      // Добавление маркера на карту
+      const vectorLayer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+          features: [marker]
+        })
+      });
+      map.addLayer(vectorLayer);
+    }
+
+    // Загрузка карты при загрузке страницы
+    document.addEventListener('DOMContentLoaded', initMap);
+  </script>  
+  <p id="latitude"></p>
+  <p id="longitude"></p>
+  <p id="accuracy"></p>
+  <p id="altitude"></p>
+  <p id="altitudeAccuracy"></p>
+  <p id="heading"></p>
+  <p id="speed"></p>
+  <p id="timestamp"></p>
+  
+  <script>
+  navigator.geolocation.getCurrentPosition(function(position) {
+      var coords = position.coords;
+      document.getElementById("latitude").textContent = "Широта: " + coords.latitude;
+      document.getElementById("longitude").textContent = "Довгота: " + coords.longitude;
+      document.getElementById("accuracy").textContent = "Точність положення: " + coords.accuracy + " м";
+      if (coords.altitude) {
+          document.getElementById("altitude").textContent = "Висота: " + coords.altitude + " м";
+          document.getElementById("altitudeAccuracy").textContent = "Точність висоти: " + coords.altitudeAccuracy + " м";
+      }
+      if (coords.heading) {
+          document.getElementById("heading").textContent = "Напрямок: " + coords.heading + " градусів за годинниковою стрілкою від півночі";
+      }
+      if (coords.speed) {
+          document.getElementById("speed").textContent = "Швидкість: " + coords.speed + " м/с";
+      }
+      document.getElementById("timestamp").textContent = "Час визначення місця розташування: " + new Date(position.timestamp);
+  }, function(error) {
+      console.log("Помилка при отриманні даних про місцезнаходження: " + error.message);
+  });
+  </script>
+</body>
+</html>
